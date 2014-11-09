@@ -1,6 +1,6 @@
 #include "BldcMotor.h"
 #include "Arduino.h"
-#include <cmath>
+#include "utilities.h"
 
 
 BldcMotor::BldcMotor(int pin1, int pin2, int pin3) : pin1(pin1), pin2(pin2), pin3(pin3)
@@ -22,12 +22,6 @@ void BldcMotor::setPosition(float md)
 }
 
 
-float BldcMotor::getPosition() const
-{
-    return mechDegrees + mechOffset;
-}
-
-
 void BldcMotor::setPositionOffset(float mo)
 {
     mechOffset = mo;
@@ -38,6 +32,12 @@ void BldcMotor::setCurrentLimit(float cl)
 {
     currentLimit = cl;
     configureOutputs();
+}
+
+
+float BldcMotor::getPosition() const
+{
+    return mechDegrees + mechOffset;
 }
 
 
@@ -70,7 +70,6 @@ BldcMotor::operator float() const
 
 void BldcMotor::configureOutputs()
 {
-    const float pi = 3.1415926f;
     const float mechDegElecRadConv = 7.f * pi / 180.f;
     const int maxPwmInt = 4095;
 

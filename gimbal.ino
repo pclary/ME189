@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "BldcMotor.h"
+#include "utilities.h"
 #include <cmath>
 
 
@@ -22,13 +23,12 @@ void setup()
 
 void loop()
 {
-    const float pi = 3.1415926f;
     float t = millis() / 1000.f;
-    const float freq = 2.f;
+    const float freq = 1.f;
     
     yaw = std::sin(t*freq) * 60.f;
-    pitch = std::sin(t*freq + pi/3.f) * 45.f;
-    roll = std::sin(t*freq + pi/2.f) * 180.f;
+    pitch = std::sin(t*freq + pi/2.f) * 45.f;
+    roll = std::sin(t*freq + pi/4.f) * 180.f;
     
-    delay(10);
+    delay(1);
 }

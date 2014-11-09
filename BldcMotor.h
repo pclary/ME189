@@ -8,9 +8,9 @@ public:
     BldcMotor(int pin1, int pin2, int pin3);
 
     void setPosition(float mechDegrees);
-    float getPosition() const;
     void setPositionOffset(float mechOffset);
     void setCurrentLimit(float currentLimit);
+    float getPosition() const;
 
     BldcMotor& operator=(float mechDegrees);
     BldcMotor& operator+=(float mechDegrees);

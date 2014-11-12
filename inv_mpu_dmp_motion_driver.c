@@ -24,9 +24,6 @@
 #include "dmpKey.h"
 #include "dmpmap.h"
 
-#define EMPL_TARGET_MK20DX256
-#define MPU6500
-
 /* The following functions must be defined for this platform:
  * i2c_write(unsigned char slave_addr, unsigned char reg_addr,
  *      unsigned char length, unsigned char const *data)
@@ -35,23 +32,16 @@
  * delay_ms(unsigned long num_ms)
  * get_ms(unsigned long *count)
  */
-#if defined EMPL_TARGET_STM32F4
-#include "i2c.h"   
-#include "main.h"
-#include "board-st_discovery.h"
-   
-#define i2c_write   Sensors_I2C_WriteRegister
-#define i2c_read    Sensors_I2C_ReadRegister
-#define get_ms      get_tick_count
-
-#elif defined EMPL_TARGET_MK20DX256
-#include "MPU.h"
-
-#elif defined MOTION_DRIVER_TARGET_MSP430
+#if defined MOTION_DRIVER_TARGET_MSP430
 #include "msp430.h"
 #include "msp430_clock.h"
 #define delay_ms    msp430_delay_ms
 #define get_ms      msp430_get_clock_ms
+#define log_i(...)     do {} while (0)
+#define log_e(...)     do {} while (0)
+
+#elif defined MOTION_DRIVER_TARGET_MK20DX256
+#include "imu.h"
 #define log_i(...)     do {} while (0)
 #define log_e(...)     do {} while (0)
 

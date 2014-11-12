@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include "BldcMotor.h"
 #include "utilities.h"
+#include "imu.h"
 #include <cmath>
-#include "inv_mpu_dmp_motion_driver.h"
+#include <Wire.h>
 
 
 BldcMotor yaw(3, 4, 5);
@@ -13,29 +14,41 @@ int enablePin = 2;
 
 void setup()
 {
+    Serial.begin(115200);
+
+    pinMode(enablePin, OUTPUT);
+    pinMode(13, OUTPUT);
+
+    led_on();
+    
     const float cl = 0.3f;
     yaw.setCurrentLimit(cl);
     pitch.setCurrentLimit(cl);
     roll.setCurrentLimit(cl);
+    //digitalWrite(enablePin, HIGH);
 
-    pinMode(enablePin, OUTPUT);
-    digitalWrite(enablePin, HIGH);
+    imu_init();
 
-    dmp_load_motion_driver_firmware();
-    dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT);
-    dmp_set_fifo_rate(200);
-    dmp_set_interrupt_mode(DMP_INT_CONTINUOUS);
+    led_off();
 }
 
 
 void loop()
 {
-    float t = millis() / 1000.f;
-    const float freq = 5.f;
+    const float qdiv = 1073741824.f;
+    float qw = quat[0] / qdiv;
+    float qx = quat[1] / qdiv;
+    float qy = quat[2] / qdiv;
+    float qz = quat[3] / qdiv;
+
+    float yaw = std::atan2(2.f*qy*qw - 2.f*qx*qz, 1.f - 2.f*qy*qy - 2*qz*qz);
+    float pitch = std::asin(2.f*qx*qy + 2.f*qz*qw);
+    float roll = std::atan2(2.f*qx*qw - 2.f*qy*qz, 1 - 2.f*qx*qx - 2.f*qz*qz);
     
-    yaw = std::sin(t*freq) * 60.f;
-    pitch = std::sin(t*freq + pi/2.f) * 45.f;
-    roll = std::sin(t*freq + pi/4.f) * 180.f;
+    char buf[256];
+    //snprintf(buf, 256, "$%d %d %d %d\n", quat[0], quat[1], quat[2], quat[3]);
+    snprintf(buf, 256, "yaw: %7.2f pitch: %7.2f roll: %7.2f\n", yaw*180.f/pi, pitch*180.f/pi, roll*180.f/pi);
+    Serial.write(buf);
     
-    delay(1);
+    delay(100);
 }

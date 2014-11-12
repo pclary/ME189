@@ -18,8 +18,7 @@
 #define _INV_MPU_DMP_MOTION_DRIVER_H_
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define TAP_X               (0x01)

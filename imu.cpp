@@ -27,8 +27,8 @@ void imu_init()
     int_param.mode = FALLING;
     int_param.cb = imu_int_callback;
     const signed char gyro_orientation[9] = { 1,  0,  0,
-                                              0,  1,  0,
-                                              0,  0,  1};
+                                              0, -1,  0,
+                                              0,  0, -1};
 
     if (mpu_init(&int_param))
         led_on();

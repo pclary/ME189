@@ -41,9 +41,9 @@ void loop()
     float qy = quat[2] / qdiv;
     float qz = quat[3] / qdiv;
 
-    float pitch = std::atan2(2.f*qy*qw - 2.f*qx*qz, 1.f - 2.f*qy*qy - 2*qz*qz);
-    float yaw = std::asin(2.f*qx*qy + 2.f*qz*qw);
-    float roll = pi - std::atan2(2.f*qx*qw - 2.f*qy*qz, 1 - 2.f*qx*qx - 2.f*qz*qz);
+    float roll = std::atan2(2.f*(qw*qx + qy*qz), 1.f - 2.f*(qx*qx + qy*qy));
+    float pitch = std::asin(2.f*(qw*qy - qz*qx));
+    float yaw = std::atan2(2.f*(qw*qz + qx*qy), 1 - 2.f*(qy*qy + qz*qz));
     
     char buf[256];
     //snprintf(buf, 256, "$%d %d %d %d\n", quat[0], quat[1], quat[2], quat[3]);

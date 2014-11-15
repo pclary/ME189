@@ -20,8 +20,10 @@ int i2c_read(unsigned char slave_addr,
              unsigned char *data);
 void delay_ms(unsigned long num_ms);
 void get_ms(unsigned long *count);
+void log_serial(const char* format, ...);
 int reg_int_cb(struct int_param_s *int_param);
 void imu_int_callback();
+char imu_check_update();
 
 #ifdef __cplusplus
 }

@@ -60,8 +60,8 @@ static inline int reg_int_cb(struct int_param_s *int_param)
 #elif defined MOTION_DRIVER_TARGET_MK20DX256
 #include "imu.h"
 
-#define log_i(...)     do {} while (0)
-#define log_e(...)     do {} while (0)
+#define log_i log_serial
+#define log_e log_serial
 #define min(a,b) ((a<b)?a:b)
 
 #elif defined EMPL_TARGET_MSP430
@@ -2860,6 +2860,7 @@ int mpu_read_mem(unsigned short mem_addr, unsigned short length,
 int mpu_load_firmware(unsigned short length, const unsigned char *firmware,
     unsigned short start_addr, unsigned short sample_rate)
 {
+    unsigned short i;
     unsigned short ii;
     unsigned short this_write;
     /* Must divide evenly into st.hw->bank_size to avoid bank crossings. */
@@ -2868,25 +2869,53 @@ int mpu_load_firmware(unsigned short length, const unsigned char *firmware,
 
     if (st.chip_cfg.dmp_loaded)
         /* DMP should only be loaded once. */
+    {
+        log_e("dmp already loaded\n");
         return -1;
+    }
 
     if (!firmware)
+    {
+        log_e("not firmware\n");
         return -1;
+    }
     for (ii = 0; ii < length; ii += this_write) {
         this_write = min(LOAD_CHUNK, length - ii);
         if (mpu_write_mem(ii, this_write, (unsigned char*)&firmware[ii]))
+        {
+            log_e("write failed 1\n");
             return -1;
+        }
         if (mpu_read_mem(ii, this_write, cur))
+        {
+            log_e("write failed 2\n");
             return -1;
+        }
         if (memcmp(firmware+ii, cur, this_write))
+        {
+            log_e("write check failed: 0x%x 0x%x 0x%x %d\n", firmware+ii, cur, this_write, ii);
+            for (i = 0; i < this_write; ++i)
+            {
+                log_e("0x%.2x ", *((char*)(firmware+ii+i)));
+            }
+            log_e("\n");
+            for (i = 0; i < this_write; ++i)
+            {
+                log_e("0x%.2x ", *((char*)(cur+i)));
+            }
+            log_e("\n");
             return -2;
+        }
     }
 
     /* Set program start address. */
     tmp[0] = start_addr >> 8;
     tmp[1] = start_addr & 0xFF;
     if (i2c_write(st.hw->addr, st.reg->prgm_start_h, 2, tmp))
+    {
+        log_e("i2c write failed\n");
         return -1;
+    }
 
     st.chip_cfg.dmp_loaded = 1;
     st.chip_cfg.dmp_sample_rate = sample_rate;

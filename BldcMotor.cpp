@@ -57,7 +57,7 @@ BldcMotor& BldcMotor::operator+=(float value)
 
 BldcMotor& BldcMotor::operator-=(float value)
 {
-    setPosition(getPosition() + value);
+    setPosition(getPosition() - value);
     return *this;
 }
 

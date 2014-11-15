@@ -42,8 +42,8 @@
 
 #elif defined MOTION_DRIVER_TARGET_MK20DX256
 #include "imu.h"
-#define log_i(...)     do {} while (0)
-#define log_e(...)     do {} while (0)
+#define log_i log_serial
+#define log_e log_serial
 
 #elif defined EMPL_TARGET_MSP430
 #include "msp430.h"

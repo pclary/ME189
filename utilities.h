@@ -38,4 +38,17 @@ inline void led_off()
     digitalWrite(13, LOW);
 }
 
+
+inline float deadband(float value, float dbwidth)
+{
+    const float hdbw = 0.5f * dbwidth;
+
+    if (value < -hdbw)
+        return value + hdbw;
+    else if (value > hdbw)
+        return value - hdbw;
+    else
+        return 0.f;
+}
+
 #endif // UTILITIES_H

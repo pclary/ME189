@@ -29,13 +29,13 @@ inline float trapezoid(float phase)
 
 inline void led_on()
 {
-    digitalWrite(13, HIGH);
+    //digitalWrite(13, HIGH);
 }
 
 
 inline void led_off()
 {
-    digitalWrite(13, LOW);
+    //digitalWrite(13, LOW);
 }
 
 

@@ -1,12 +1,15 @@
 #include "imu.h"
 #include <Arduino.h>
-#include <Wire.h>
-//#include "i2c_t3.h"
+#include <SPI.h>
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
 #include "utilities.h"
 #include <stdio.h>
 
+
+const int interruptPin = 7;
+const int ncsPin = 10;
+SPISettings spiSettings(1000000, MSBFIRST, SPI_MODE0);
 
 volatile long quat[4];
 volatile char new_update = false;
@@ -17,61 +20,67 @@ static inline unsigned short inv_orientation_matrix_to_scalar(const signed char 
 
 void imu_init()
 {
-    //Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_INT, I2C_RATE_400);
-    Wire.begin();
+    pinMode(ncsPin, OUTPUT);
+    digitalWrite(ncsPin, HIGH);
+    SPI.begin();
     
     int_param_s int_param;
-    int_param.pin = 17;
+    int_param.pin = interruptPin;
     int_param.mode = FALLING;
     int_param.cb = imu_int_callback;
     const signed char gyro_orientation[9] = { 1,  0,  0,
                                               0,  1,  0,
                                               0,  0,  1};
 
-    if (mpu_init(&int_param))
-        led_on();
-    mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL);
-    mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL);
-    mpu_set_sample_rate(200);
+    mpu_init(&int_param); // 153.27 ms
+    mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL); // 50.03 ms
+    mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL); // 50.16 ms
+    mpu_set_sample_rate(200); // 0.044 ms
 
-    pinMode(14, OUTPUT);
-    digitalWrite(14, HIGH);
-    dmp_load_motion_driver_firmware();
-    dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation));
+    dmp_load_motion_driver_firmware(); // 1.02 ms
+    dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation)); // 0.28 ms
     dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT |
                        DMP_FEATURE_GYRO_CAL |
-                       DMP_FEATURE_TAP);
-    dmp_set_fifo_rate(200);
-    dmp_set_interrupt_mode(DMP_INT_CONTINUOUS);
-    mpu_set_dmp_state(1);
+                       DMP_FEATURE_TAP); // 151.86 ms
+    
+    dmp_set_fifo_rate(200); // 0.212 ms
+    dmp_set_interrupt_mode(DMP_INT_CONTINUOUS); // 0.142 ms
+    mpu_set_dmp_state(1); // 0.002 ms
 }
 
 
+/* Uses SPI instead of I2C */
 int i2c_write(unsigned char slave_addr,
               unsigned char reg_addr,
               unsigned char length,
               unsigned char const *data)
 {
-    Wire.beginTransmission(slave_addr);
-    Wire.write(reg_addr);
-    Wire.write(data, length);
-    Wire.endTransmission();
+
+    SPI.beginTransaction(spiSettings);
+    digitalWrite(ncsPin, LOW);
+    SPI.transfer(reg_addr);
+    for (int i = 0; i < length; ++i)
+        SPI.transfer(data[i]);
+    digitalWrite(ncsPin, HIGH);
+    SPI.endTransaction();
 
     return 0;
 }
 
 
+/* Uses SPI instead of I2C */
 int i2c_read(unsigned char slave_addr,
              unsigned char reg_addr,
              unsigned char length,
              unsigned char *data)
 {
-    Wire.beginTransmission(slave_addr);
-    Wire.write(reg_addr);
-    Wire.endTransmission();
-    Wire.requestFrom(slave_addr, (size_t)length);
+    SPI.beginTransaction(spiSettings);
+    digitalWrite(ncsPin, LOW);
+    SPI.transfer(reg_addr | 0x80);
     for (int i = 0; i < length; ++i)
-        data[i] = Wire.read() & 0xff;
+        data[i] = SPI.transfer(0) & 0xff;
+    digitalWrite(ncsPin, HIGH);
+    SPI.endTransaction();
     
     return 0;
 }
@@ -104,6 +113,7 @@ int reg_int_cb(struct int_param_s *int_param)
 {
     pinMode(int_param->pin, INPUT);
     attachInterrupt(int_param->pin, int_param->cb, int_param->mode);
+    SPI.usingInterrupt(int_param->pin);
     return 0;
 }
 
@@ -115,7 +125,7 @@ void imu_int_callback()
     unsigned long sensor_timestamp;
 
     dmp_read_fifo(gyro, accel, (long*)quat, &sensor_timestamp, &sensors, &more);
-    new_update = true;
+    new_update = 1;
 }
 
 

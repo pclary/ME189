@@ -3,9 +3,20 @@
 #include "utilities.h"
 
 
-BldcMotor::BldcMotor(int pin1, int pin2, int pin3) : pin1(pin1), pin2(pin2), pin3(pin3)
+BldcMotor::BldcMotor(int pin1, int pin2, int pin3, int enablePin) : pin1(pin1), pin2(pin2), pin3(pin3), enablePin(enablePin)
 {
     const int pwmFrequency = 20000;
+
+    pinMode(pin1, OUTPUT);
+    pinMode(pin2, OUTPUT);
+    pinMode(pin3, OUTPUT);
+
+    if (enablePin >= 0)
+    {
+        pinMode(enablePin, OUTPUT);
+        enabled = false;
+        digitalWrite(enablePin, enabled);
+    }
     
     analogWriteFrequency(pin1, pwmFrequency);
     analogWriteFrequency(pin2, pwmFrequency);
@@ -32,6 +43,32 @@ void BldcMotor::setCurrentLimit(float cl)
 {
     currentLimit = cl;
     configureOutputs();
+}
+
+
+void BldcMotor::enable()
+{
+    if (enablePin >= 0)
+    {
+        enabled = true;
+        digitalWrite(enablePin, enabled);
+    }
+}
+
+
+void BldcMotor::disable()
+{
+    if (enablePin >= 0)
+    {
+        enabled = false;
+        digitalWrite(enablePin, enabled);
+    }
+}
+
+
+bool BldcMotor::getEnabled()
+{
+    return enabled;
 }
 
 

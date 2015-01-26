@@ -7,10 +7,9 @@
 #include "ControlLoop.h"
 
 
-BldcMotor yawMotor(3, 4, 5);
-BldcMotor pitchMotor(20, 9, 10);
-BldcMotor rollMotor(23, 22, 21);
-int enablePin = 2;
+BldcMotor yawMotor(5, 3, 4, 0);
+BldcMotor pitchMotor(20, 6, 9, 1);
+BldcMotor rollMotor(21, 23, 22, 2);
 
 const float dt = 1.f/200.f;
 ControlLoop yawLoop(dt);
@@ -24,8 +23,7 @@ void setup()
 {
     Serial.begin(115200);
 
-    pinMode(enablePin, OUTPUT);
-    pinMode(13, OUTPUT);
+    pinMode(13, OUTPUT); // led
 
     yawLoop.setOutputLimits(-300.f, 300.f);
     pitchLoop.setOutputLimits(-400.f, 400.f);
@@ -49,16 +47,18 @@ void setup()
     yawMotor.setCurrentLimit(cl);
     pitchMotor.setCurrentLimit(cl);
     rollMotor.setCurrentLimit(cl);
-    digitalWrite(enablePin, HIGH);
+
+    yawMotor.enable();
+    pitchMotor.enable();
+    rollMotor.enable();
 
     delay(500);
-
+    
     imu_init();
 
     delay(1000);
 
     led_off();
-    
 }
 
 

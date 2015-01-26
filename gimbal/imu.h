@@ -5,8 +5,7 @@
 extern "C"
 {
 #endif
-
-    
+ 
 extern volatile long quat[4];
     
 void imu_init();

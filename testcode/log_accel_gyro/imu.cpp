@@ -34,7 +34,7 @@ void imu_init()
 
     mpu_init(&int_param); // 153.27 ms
     mpu_set_sensors(INV_XYZ_GYRO | INV_XYZ_ACCEL); // 50.03 ms
-    mpu_set_accel_fsr(3);
+    mpu_set_accel_fsr(2);
     mpu_set_gyro_fsr(3);
     mpu_configure_fifo(INV_XYZ_GYRO | INV_XYZ_ACCEL); // 50.16 ms
     mpu_set_sample_rate(1000); // 0.044 ms

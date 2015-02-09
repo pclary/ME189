@@ -41,7 +41,7 @@ void loop()
 
     for (int i = 0; i < dataLog.size(); ++i)
     {
-        snprintf(buf, 256, "%d,%d,%d,%d,%d,%d\n", dataLog[i].ax, dataLog[i].ay, dataLog[i].az, dataLog[i].gx, dataLog[i].gy, dataLog[i].gz);
+        snprintf(buf, 256, "%d,%d,%d,%d,%d,%d,%d\n", dataLog[i].ax, dataLog[i].ay, dataLog[i].az, dataLog[i].gx, dataLog[i].gy, dataLog[i].gz, dataLog[i].ts);
         Serial.write(buf);
     }
 }

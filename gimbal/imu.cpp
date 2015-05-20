@@ -1,10 +1,9 @@
 #include "imu.h"
 #include <Arduino.h>
 #include <SPI.h>
+#include <stdio.h>
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
-#include "utilities.h"
-#include <stdio.h>
 
 
 const int interruptPin = 7;

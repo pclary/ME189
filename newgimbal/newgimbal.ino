@@ -51,8 +51,8 @@ void setup()
     pitchLoop.setOutputLimits(-maxCurrent, maxCurrent);
 
     yawLoop.setTuning(0.f, 0.f, 0.f);
-    rollLoop.setTuning(0.f, 0.f, 0.f);
-    pitchLoop.setTuning(1.f, 0.f, 0.f);
+    rollLoop.setTuning(0.2f, 1.f, 0.f);
+    pitchLoop.setTuning(0.2f, 1.f, 0.f);
 
     yawMotor.enable();
     rollMotor.enable();
@@ -79,6 +79,8 @@ void setup()
     pitchMotor.setOutput(0.f, 0.f);
     
     imu_init();
+
+    Serial.write("test\n");
 }
 
 
@@ -113,9 +115,9 @@ void loop()
     const float pitchCurrent = pitchLoop.update(rctrl[2]);
 
     // Send commands to motors
-    yawMotor.setCurrent(0.3f);//yawCurrent);
-    rollMotor.setCurrent(0.3f);//rollCurrent);
-    pitchMotor.setCurrent(0.3f);//pitchCurrent);
+    yawMotor.setCurrent(yawCurrent);
+    rollMotor.setCurrent(rollCurrent);
+    pitchMotor.setCurrent(pitchCurrent);
     yawMotor.update(rpot[0]*rad2edeg);
     rollMotor.update(rpot[1]*rad2edeg);
     pitchMotor.update(rpot[2]*rad2edeg);

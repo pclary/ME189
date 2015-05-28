@@ -66,9 +66,9 @@ void setup()
                           (analogRead(potBPin) - potBOffset)*pot2rad,
                           (analogRead(potCPin) - potCOffset)*pot2rad};
 
-    potATrim = degmod(rstartup[0]*rad2edeg);
-    potBTrim = degmod(rstartup[1]*rad2edeg);
-    potCTrim = degmod(rstartup[2]*rad2edeg);
+    potATrim = -degmod(rstartup[0]*rad2edeg)/rad2edeg;
+    potBTrim = -degmod(rstartup[1]*rad2edeg)/rad2edeg;
+    potCTrim = -degmod(rstartup[2]*rad2edeg)/rad2edeg;
     
     rctrl = rstartup;
     
@@ -87,9 +87,9 @@ void loop()
     while (!imu_check_update());
 
     // Get potentiometer data
-    const Rot rpot = {(analogRead(potAPin) - potAOffset)*pot2rad,
-                      (analogRead(potBPin) - potBOffset)*pot2rad,
-                      (analogRead(potCPin) - potCOffset)*pot2rad};
+    const Rot rpot = {(analogRead(potAPin) - potAOffset)*pot2rad + potATrim,
+                      (analogRead(potBPin) - potBOffset)*pot2rad + potBTrim,
+                      (analogRead(potCPin) - potCOffset)*pot2rad + potCTrim};
     const Quat qpot = zxy2quat(rpot);
 
     // Get IMU orientation data
@@ -115,9 +115,9 @@ void loop()
     yawMotor.setCurrent(yawCurrent);
     rollMotor.setCurrent(rollCurrent);
     pitchMotor.setCurrent(pitchCurrent);
-    yawMotor.update(rpot[0]*rad2edeg - potATrim);
-    rollMotor.update(rpot[1]*rad2edeg - potBTrim);
-    pitchMotor.update(rpot[2]*rad2edeg - potCTrim);
+    yawMotor.update(rpot[0]*rad2edeg);
+    rollMotor.update(rpot[1]*rad2edeg);
+    pitchMotor.update(rpot[2]*rad2edeg);
     
     char buf[256];
     snprintf(buf, 256, "%1.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);

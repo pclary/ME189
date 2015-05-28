@@ -38,6 +38,8 @@ float degmod(float deg);
 
 void setup()
 {
+    asm(".global _printf_float");
+    
     Serial.begin(115200);
     
     delay(2000);
@@ -76,7 +78,6 @@ void setup()
     rollMotor.setOutput(0.f, 0.f);
     pitchMotor.setOutput(0.f, 0.f);
     
-    Serial.write("fuck\n");
     imu_init();
 }
 
@@ -101,7 +102,7 @@ void loop()
                        
     // Get commanded orientation
     const Quat qcom = zyx2quat(rcom);
-
+ 
     // Get desired potentiometer positions
     const Quat qctrl = (qcom - qimu) + qpot;
     rctrl = quat2zxy(qctrl, rctrl);
@@ -112,14 +113,17 @@ void loop()
     const float pitchCurrent = pitchLoop.update(rctrl[2]);
 
     // Send commands to motors
-    yawMotor.setCurrent(yawCurrent);
-    rollMotor.setCurrent(rollCurrent);
-    pitchMotor.setCurrent(pitchCurrent);
+    yawMotor.setCurrent(0.3f);//yawCurrent);
+    rollMotor.setCurrent(0.3f);//rollCurrent);
+    pitchMotor.setCurrent(0.3f);//pitchCurrent);
     yawMotor.update(rpot[0]*rad2edeg);
     rollMotor.update(rpot[1]*rad2edeg);
     pitchMotor.update(rpot[2]*rad2edeg);
+
+    //const Rot rimu = quat2zxy(qimu, {0.f, 0.f, 0.f});
     
     char buf[256];
+    //snprintf(buf, 256, "%1.4f, %1.4f, %1.4f\n", rimu[0], rimu[1], rimu[2]);
     snprintf(buf, 256, "%1.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
     Serial.write(buf);
 }

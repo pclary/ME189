@@ -14,8 +14,8 @@ const int potCPin = A14;
 const float pot2rad = pi * 330.f / 4096.f / 180.f;
 const float rad2edeg = 180.f * 4.f / pi;
 const int potAOffset = 2048;
-const int potBOffset = 2048;
-const int potCOffset = 2048;
+const int potBOffset = 1950;//2048;
+const int potCOffset = 1950;//2048;
 float potATrim = 0.f;
 float potBTrim = 0.f;
 float potCTrim = 0.f;
@@ -23,7 +23,7 @@ float potCTrim = 0.f;
 BldcMotor yawMotor(5, 3, 4, 0);
 BldcMotor rollMotor(20, 6, 9, 1);
 BldcMotor pitchMotor(21, 23, 22, 2);
-const float maxCurrent = 0.3f;
+const float maxCurrent = 0.5f;
 
 const float dt = 1.f/200.f;
 ControlLoop yawLoop(dt);
@@ -51,8 +51,8 @@ void setup()
     pitchLoop.setOutputLimits(-maxCurrent, maxCurrent);
 
     yawLoop.setTuning(0.f, 0.f, 0.f);
-    rollLoop.setTuning(0.2f, 1.f, 0.f);
-    pitchLoop.setTuning(0.2f, 1.f, 0.f);
+    rollLoop.setTuning(1.f, 30.f, 0.1f);
+    pitchLoop.setTuning(1.f, 100.f, 0.1f);
 
     yawMotor.enable();
     rollMotor.enable();
@@ -68,9 +68,9 @@ void setup()
                           (analogRead(potBPin) - potBOffset)*pot2rad,
                           (analogRead(potCPin) - potCOffset)*pot2rad};
 
-    potATrim = -degmod(rstartup[0]*rad2edeg)/rad2edeg;
-    potBTrim = -degmod(rstartup[1]*rad2edeg)/rad2edeg;
-    potCTrim = -degmod(rstartup[2]*rad2edeg)/rad2edeg;
+    potATrim = -degmod(rstartup[0]*rad2edeg);
+    potBTrim = -degmod(rstartup[1]*rad2edeg);
+    potCTrim = -degmod(rstartup[2]*rad2edeg);
     
     rctrl = rstartup;
     
@@ -90,9 +90,9 @@ void loop()
     while (!imu_check_update());
 
     // Get potentiometer data
-    const Rot rpot = {(analogRead(potAPin) - potAOffset)*pot2rad + potATrim,
-                      (analogRead(potBPin) - potBOffset)*pot2rad + potBTrim,
-                      (analogRead(potCPin) - potCOffset)*pot2rad + potCTrim};
+    const Rot rpot = {(analogRead(potAPin) - potAOffset)*pot2rad*0.f,
+                      (analogRead(potBPin) - potBOffset)*pot2rad,
+                      (analogRead(potCPin) - potCOffset)*pot2rad};
     const Quat qpot = zxy2quat(rpot);
 
     // Get IMU orientation data
@@ -110,23 +110,30 @@ void loop()
     rctrl = quat2zxy(qctrl, rctrl);
 
     // Update PID loops
-    const float yawCurrent = yawLoop.update(rctrl[0]);
-    const float rollCurrent = rollLoop.update(rctrl[1]);
-    const float pitchCurrent = pitchLoop.update(rctrl[2]);
+    const float yawCurrent = yawLoop.update(rctrl[0] - rpot[0]);
+    const float rollCurrent = rollLoop.update(rctrl[1] - rpot[1]);
+    const float pitchCurrent = pitchLoop.update(rctrl[2] - rpot[2]);
 
     // Send commands to motors
-    yawMotor.setCurrent(yawCurrent);
+    yawMotor.setCurrent(0.f);//yawCurrent);
     rollMotor.setCurrent(rollCurrent);
     pitchMotor.setCurrent(pitchCurrent);
-    yawMotor.update(rpot[0]*rad2edeg);
-    rollMotor.update(rpot[1]*rad2edeg);
-    pitchMotor.update(rpot[2]*rad2edeg);
+    yawMotor.update(rpot[0]*rad2edeg + potATrim);
+    rollMotor.update(rpot[1]*rad2edeg + potBTrim);
+    pitchMotor.update(rpot[2]*rad2edeg + potCTrim);
 
-    //const Rot rimu = quat2zxy(qimu, {0.f, 0.f, 0.f});
+    const Rot rimu = quat2zxy(qimu, {0.f, 0.f, 0.f});
     
     char buf[256];
-    //snprintf(buf, 256, "%1.4f, %1.4f, %1.4f\n", rimu[0], rimu[1], rimu[2]);
-    snprintf(buf, 256, "%1.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
+    // snprintf(buf, 256, "imu:  %2.4f, %1.4f, %1.4f\n", rimu[0], rimu[1], rimu[2]);
+    // Serial.write(buf);
+    // snprintf(buf, 256, "pot:  %2.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
+    // //snprintf(buf, 256, "pot:  %.4d, %.4d, %.4d\n", analogRead(potAPin), analogRead(potBPin), analogRead(potCPin));
+    // Serial.write(buf);
+    // snprintf(buf, 256, "ctrl: %2.4f, %1.4f, %1.4f\n", rctrl[0], rctrl[1], rctrl[2]);
+    // Serial.write(buf);
+    
+    snprintf(buf, 256, "I: %2.4f, %1.4f, %1.4f\n", yawCurrent, rollCurrent, pitchCurrent);
     Serial.write(buf);
 }
 

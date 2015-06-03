@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include "ControlLoop.h"
 #include "qmath.h"
+#include "LowPass.h"
 
 
 const int potAPin = A10;
@@ -19,6 +20,8 @@ const int potCOffset = 1950;//2048;
 float potATrim = 0.f;
 float potBTrim = 0.f;
 float potCTrim = 0.f;
+
+LowPass yawLP;
 
 BldcMotor yawMotor(5, 3, 4, 0);
 BldcMotor rollMotor(20, 6, 9, 1);
@@ -42,10 +45,10 @@ void setup()
     
     Serial.begin(115200);
     
-    delay(2000);
-    
     analogReadResolution(12);
 
+    yawLP.setCutoffFreq(0.1f, dt);
+    
     yawLoop.setOutputLimits(-maxCurrent, maxCurrent);
     rollLoop.setOutputLimits(-maxCurrent, maxCurrent);
     pitchLoop.setOutputLimits(-maxCurrent, maxCurrent);
@@ -108,6 +111,8 @@ void loop()
     // Get desired potentiometer positions
     const Quat qctrl = (qcom - qimu) + qpot;
     rctrl = quat2zxy(qctrl, rctrl);
+    yawLP.push(rctrl[0]);
+    rctrl[0] = rctrl[0] - yawLP;
 
     // Update PID loops
     const float yawCurrent = yawLoop.update(rctrl[0] - rpot[0]);
@@ -130,8 +135,8 @@ void loop()
     // snprintf(buf, 256, "pot:  %2.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
     // //snprintf(buf, 256, "pot:  %.4d, %.4d, %.4d\n", analogRead(potAPin), analogRead(potBPin), analogRead(potCPin));
     // Serial.write(buf);
-    // snprintf(buf, 256, "ctrl: %2.4f, %1.4f, %1.4f\n", rctrl[0], rctrl[1], rctrl[2]);
-    // Serial.write(buf);
+    snprintf(buf, 256, "ctrl: %2.4f, %1.4f, %1.4f\n", rctrl[0], rctrl[1], rctrl[2]);
+    Serial.write(buf);
     
     snprintf(buf, 256, "I: %2.4f, %1.4f, %1.4f\n", yawCurrent, rollCurrent, pitchCurrent);
     Serial.write(buf);

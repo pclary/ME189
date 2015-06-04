@@ -35,6 +35,7 @@ ControlLoop rollLoop(dt);
 
 Rot rcom = {0.f, 0.f, 0.f};
 Rot rctrl;
+Rot rimuraw;
 
 float degmod(float deg);
 
@@ -47,7 +48,7 @@ void setup()
     
     analogReadResolution(12);
 
-    yawLP.setCutoffFreq(0.1f, dt);
+    yawLP.setCutoffFreq(0.3f, dt);
     
     yawLoop.setOutputLimits(-maxCurrent, maxCurrent);
     rollLoop.setOutputLimits(-maxCurrent, maxCurrent);
@@ -89,6 +90,8 @@ void setup()
 
 void loop()
 {
+    char buf[256];
+    
     // Wait for a new IMU update
     while (!imu_check_update());
 
@@ -100,19 +103,22 @@ void loop()
 
     // Get IMU orientation data
     const float qdiv = 1073741824.f;
-    const Quat qimu = {quat[0] / qdiv, 
-                       quat[1] / qdiv, 
-                       quat[2] / qdiv, 
-                       quat[3] / qdiv};
-                       
+    const Quat qimuraw = {quat[0] / qdiv, 
+                          quat[1] / qdiv, 
+                          quat[2] / qdiv, 
+                          quat[3] / qdiv};
+    rimuraw = quat2zxy(qimuraw, rimuraw);
+    yawLP.push(rimuraw[0]);
+    const Rot ryawlp = {-yawLP, 0.f, 0.f};
+    const Quat qyawlp = zxy2quat(ryawlp);
+    const Quat qimu = qyawlp + qimuraw;
+    
     // Get commanded orientation
     const Quat qcom = zyx2quat(rcom);
  
     // Get desired potentiometer positions
     const Quat qctrl = (qcom - qimu) + qpot;
     rctrl = quat2zxy(qctrl, rctrl);
-    yawLP.push(rctrl[0]);
-    rctrl[0] = rctrl[0] - yawLP;
 
     // Update PID loops
     const float yawCurrent = yawLoop.update(rctrl[0] - rpot[0]);
@@ -129,17 +135,19 @@ void loop()
 
     const Rot rimu = quat2zxy(qimu, {0.f, 0.f, 0.f});
     
-    char buf[256];
-    // snprintf(buf, 256, "imu:  %2.4f, %1.4f, %1.4f\n", rimu[0], rimu[1], rimu[2]);
-    // Serial.write(buf);
-    // snprintf(buf, 256, "pot:  %2.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
-    // //snprintf(buf, 256, "pot:  %.4d, %.4d, %.4d\n", analogRead(potAPin), analogRead(potBPin), analogRead(potCPin));
-    // Serial.write(buf);
-    snprintf(buf, 256, "ctrl: %2.4f, %1.4f, %1.4f\n", rctrl[0], rctrl[1], rctrl[2]);
-    Serial.write(buf);
     
-    snprintf(buf, 256, "I: %2.4f, %1.4f, %1.4f\n", yawCurrent, rollCurrent, pitchCurrent);
+    snprintf(buf, 256, "imuraw: %2.4f, %1.4f, %1.4f\n", rimuraw[0], rimuraw[1], rimuraw[2]);
     Serial.write(buf);
+    snprintf(buf, 256, "imu: %2.4f, %1.4f, %1.4f\n", rimu[0], rimu[1], rimu[2]);
+    Serial.write(buf);
+    // snprintf(buf, 256, "pot:  %2.4f, %1.4f, %1.4f\n", rpot[0], rpot[1], rpot[2]);
+    // snprintf(buf, 256, "pot:  %.4d, %.4d, %.4d\n", analogRead(potAPin), analogRead(potBPin), analogRead(potCPin));
+    // Serial.write(buf);
+    // snprintf(buf, 256, "ctrl: %2.4f, %1.4f, %1.4f\n", rctrl[0], rctrl[1], rctrl[2]);
+    // Serial.write(buf);
+    
+    // snprintf(buf, 256, "I: %2.4f, %1.4f, %1.4f\n", yawCurrent, rollCurrent, pitchCurrent);
+    // Serial.write(buf);
 }
 
 
